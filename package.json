@@ -26,6 +26,9 @@
     "sass": "^1.32.8"
   },
   "dependencies": {
-    "lodash.debounce": "^4.0.8"
+    "@pnotify/core": "^5.2.0",
+    "@pnotify/mobile": "^5.2.0",
+    "lodash.debounce": "^4.0.8",
+    "material-design-icons": "^3.0.1"
   }
 }
