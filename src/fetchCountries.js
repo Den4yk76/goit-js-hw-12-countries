@@ -1,3 +1,8 @@
+import { error, defaults } from '@pnotify/core/dist/PNotify.js';
+import '@pnotify/core/dist/BrightTheme.css';
+
+defaults.delay = 2500;
+
 export default class CountriesApiService {
     constructor() {}
 
@@ -6,11 +11,21 @@ export default class CountriesApiService {
 
         if (val) {
             return fetch(`https://restcountries.eu/rest/v2/name/${val}`)
-                .then(response => response.json())
+                .then(response =>
+                    response.ok ? response.json() : Promise.reject(response),
+                )
                 .then(data => {
                     return data;
                 })
-                .catch(error => console.log(error));
+                .catch(err =>
+                    err.status === 404
+                        ? error({
+                              text: `Возникла ошибка ${err.status}. Похоже такой записи не найдено`,
+                          })
+                        : error({
+                              text: `Возникла непредвиденная ошибка. Попробуйте позже`,
+                          }),
+                );
         } else return;
     }
 }
