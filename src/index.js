@@ -1,18 +1,12 @@
 import './sass/main.scss';
-import CountriesApiService from '../src/fetchCountries.js';
+import fetchCountries from '../src/fetchCountries.js';
 import countryMarkup from './templates/country-template.hbs';
-import {
-    alert,
-    notice,
-    info,
-    success,
-    error,
-    defaults,
-} from '@pnotify/core/dist/PNotify.js';
+import countriesMarkup from './templates/countries-template.hbs';
+import { success, error, defaults } from '@pnotify/core/dist/PNotify.js';
 import '@pnotify/core/dist/BrightTheme.css';
+import '@pnotify/confirm/dist/PNotifyConfirm.css';
 
 defaults.delay = 2500;
-const countriesApiService = new CountriesApiService();
 
 const debounse = require('lodash.debounce');
 const refs = {
@@ -20,48 +14,44 @@ const refs = {
     listEl: document.querySelector('.js-countries'),
 };
 
-refs.inputEl.addEventListener('input', debounse(onInput, 1000));
+refs.inputEl.addEventListener('input', debounse(onInput, 500));
 
 function onInput(e) {
-    if (countriesApiService.fetchCountry(e)) {
+    if (e.target.value.trim('') === '') {
         refs.listEl.textContent = '';
-        countriesApiService
-            .fetchCountry(e)
-            .then(data => {
-                return data;
-            })
-            .then(arrayIteration)
-            .catch(err =>
-                err.status === 404
-                    ? error({
-                          text: `Возникла ошибка ${err.status}. Похоже такой записи не найдено`,
-                      })
-                    : error({
-                          text: `Возникла непредвиденная ошибка. Попробуйте позже`,
-                      }),
-            );
-    } else {
         return;
     }
-}
 
-function arrayIteration(data) {
-    if (data.length > 10) {
-        error({
-            text: 'Слишком много совпадений. Необходимо сделать запрос более специфичным',
+    refs.listEl.textContent = '';
+    fetchCountries(e.target.value.trim(''))
+        .then(response =>
+            response.ok ? response.json() : Promise.reject(response),
+        )
+        .then(countries => {
+            const countriesLength = countries.length;
+            if (countriesLength === 1) {
+                refs.listEl.innerHTML = countryMarkup(countries[0]);
+                success({ text: `Страна, сэээээр` });
+                return;
+            }
+            if (countriesLength > 1 && countriesLength <= 10) {
+                refs.listEl.innerHTML = countriesMarkup(countries);
+                success({ text: `Овсянка, сэээээр` });
+                return;
+            }
+            error({
+                text: 'Найдено слишком много стран, сэээр. Уточните поиск, сээээр',
+            });
+        })
+        .catch(err => {
+            if (err.status === 404) {
+                error({
+                    text: `Получена ошибка ${err.status}. Такая страна не найдена.`,
+                });
+            } else {
+                error({
+                    text: 'Произошла непредвиденная ошибка. Скорее всего проблема связи',
+                });
+            }
         });
-    } else if (data.length >= 2 && data.length <= 10) {
-        success({ text: 'Ляпс!)' });
-        for (let elem of data) {
-            refs.listEl.insertAdjacentHTML(
-                'beforeend',
-                `<li class="countries-list">${elem.name}</li>`,
-            );
-        }
-    } else if (data.length === 1) {
-        success({ text: 'Диви шо тут!))' });
-        for (let elem of data) {
-            refs.listEl.insertAdjacentHTML('beforeend', countryMarkup(elem));
-        }
-    }
 }
