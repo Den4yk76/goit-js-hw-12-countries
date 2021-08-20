@@ -23,23 +23,34 @@ const refs = {
 refs.inputEl.addEventListener('input', debounse(onInput, 1000));
 
 function onInput(e) {
-    if (countriesApiService.fetchCountry !== undefined) {
+    if (countriesApiService.fetchCountry(e)) {
         refs.listEl.textContent = '';
         countriesApiService
             .fetchCountry(e)
+            .then(data => {
+                return data;
+            })
             .then(arrayIteration)
-            .catch(error => console.log('error index', error));
+            .catch(err =>
+                err.status === 404
+                    ? error({
+                          text: `Возникла ошибка ${err.status}. Похоже такой записи не найдено`,
+                      })
+                    : error({
+                          text: `Возникла непредвиденная ошибка. Попробуйте позже`,
+                      }),
+            );
     } else {
-        refs.listEl.textContent = '';
+        return;
     }
 }
 
 function arrayIteration(data) {
-    if (data !== undefined && data.length > 10) {
+    if (data.length > 10) {
         error({
             text: 'Слишком много совпадений. Необходимо сделать запрос более специфичным',
         });
-    } else if (data !== undefined && data.length >= 2 && data.length <= 10) {
+    } else if (data.length >= 2 && data.length <= 10) {
         success({ text: 'Ляпс!)' });
         for (let elem of data) {
             refs.listEl.insertAdjacentHTML(
@@ -47,7 +58,7 @@ function arrayIteration(data) {
                 `<li class="countries-list">${elem.name}</li>`,
             );
         }
-    } else if (data !== undefined && data.length === 1) {
+    } else if (data.length === 1) {
         success({ text: 'Диви шо тут!))' });
         for (let elem of data) {
             refs.listEl.insertAdjacentHTML('beforeend', countryMarkup(elem));

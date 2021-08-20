@@ -8,24 +8,18 @@ export default class CountriesApiService {
 
     fetchCountry(e) {
         const val = e.target.value;
-
         if (val) {
             return fetch(`https://restcountries.eu/rest/v2/name/${val}`)
-                .then(response =>
-                    response.ok ? response.json() : Promise.reject(response),
-                )
-                .then(data => {
-                    return data;
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        return Promise.reject(response);
+                    }
                 })
-                .catch(err =>
-                    err.status === 404
-                        ? error({
-                              text: `Возникла ошибка ${err.status}. Похоже такой записи не найдено`,
-                          })
-                        : error({
-                              text: `Возникла непредвиденная ошибка. Попробуйте позже`,
-                          }),
-                );
-        } else return;
+                .catch(err => console.log(err));
+        } else {
+            return;
+        }
     }
 }
